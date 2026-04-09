@@ -8,7 +8,7 @@ function M:peek(job)
 	end
 
 	local output, err = Command("bat")
-		:arg("--style"):arg("plain")
+		:arg("--style"):arg("numbers")
 		:arg("--color"):arg("always")
 		:arg("--paging"):arg("never")
 		:arg(tostring(job.file.url))
