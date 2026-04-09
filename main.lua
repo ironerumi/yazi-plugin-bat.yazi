@@ -7,33 +7,30 @@ function M:peek(job)
 		return
 	end
 
+	local start = job.skip + 1
+	local finish = job.skip + job.area.h
+
 	local output, err = Command("bat")
 		:arg("--style"):arg("numbers")
 		:arg("--color"):arg("always")
 		:arg("--paging"):arg("never")
+		:arg("--line-range"):arg(start .. ":" .. finish)
 		:arg(tostring(job.file.url))
 		:output()
 
 	if not output then
-		return ya.preview_widget(job, ui.Text("Error: " .. tostring(err)):area(job.area))
+		return ya.preview_widget(job, ui.Text("Error: " .. tostring(err)):area(job.area):wrap(ui.Wrap.YES))
 	end
 
-	local lines = {}
-	local i = 0
-	for line in output.stdout:gmatch("[^\n]*\n?") do
-		i = i + 1
-		if i > job.skip then
-			lines[#lines + 1] = ui.Line.parse(line)
-		end
-		if #lines >= job.area.h then break end
-	end
+	local s = output.stdout:gsub("\t", string.rep(" ", rt.preview.tab_size))
 
-	if job.skip > 0 and #lines == 0 then
+	if job.skip > 0 and s == "" then
 		ya.emit("peek", { math.max(0, job.skip - job.area.h), only_if = job.file.url, upper_bound = false })
 		return
 	end
 
-	ya.preview_widget(job, ui.List(lines):area(job.area))
+	local wrap = rt.preview.wrap == "yes" and ui.Wrap.YES or ui.Wrap.NO
+	ya.preview_widget(job, ui.Text.parse(s):area(job.area):wrap(wrap))
 end
 
 function M:seek(job)
